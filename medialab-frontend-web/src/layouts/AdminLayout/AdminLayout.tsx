@@ -1,246 +1,331 @@
-import { useState } from 'react'
-import { 
-  Home, 
-  FolderOpen, 
-  Package, 
-  Users, 
-  UserCheck, 
-  Settings,
-  Bell,
-  LogOut,
-  Menu,
-  X,
-  ChevronDown,
-  ChevronRight
-} from 'lucide-react'
+// src/layouts/AdminLayout/AdminLayout.tsx
+import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/context/AuthContext'
+import AdminSidebar from './components/AdminSidebar'
+import AdminNavbar from './components/AdminNavbar'
+import AdminRightSidebar from './components/AdminRightSidebar'
+import LockScreen from './components/LockScreen'
+import { 
+  MenuIcon, 
+  XIcon,
+  ClipboardListIcon,
+  BellIcon,
+  GroupIcon,
+  CalendarDaysIcon
+} from 'lucide-react'
 
 interface AdminLayoutProps {
   children: React.ReactNode
 }
 
-interface MenuSection {
-  id: string
-  label: string
-  icon: React.ReactNode
-  isExpanded?: boolean
-  subItems?: {
-    id: string
-    label: string
-    href: string
-    badge?: number
-  }[]
-}
+export type RightSidebarSection = 'tasks' | 'notifications' | 'users' | 'calendar' | null
 
 const AdminLayout = ({ children }: AdminLayoutProps): React.JSX.Element => {
-  const { user, logout } = useAuth()
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [expandedSections, setExpandedSections] = useState<string[]>(['projects'])
+  const { isAuthenticated } = useAuth()
+  const location = useLocation()
+  
+  // Estado del sidebar principal
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('adminSidebarCollapsed')
+    return saved ? JSON.parse(saved) : false
+  })
+  
+  // Estado del sidebar derecho
+  const [rightSidebarSection, setRightSidebarSection] = useState<RightSidebarSection>(null)
+  
+  // Estados para móvil
+  const [mobileLeftSidebarOpen, setMobileLeftSidebarOpen] = useState(false)
+  const [mobileRightSidebarOpen, setMobileRightSidebarOpen] = useState(false)
+  const [mobilePanelSection, setMobilePanelSection] = useState<RightSidebarSection>('tasks')
+  
+  // Estado de bloqueo (placeholder - implementar según tu lógica de auth)
+  const [isLocked, setIsLocked] = useState(false)
 
-  const toggleSection = (sectionId: string): void => {
-    setExpandedSections(prev => 
-      prev.includes(sectionId) 
-        ? prev.filter(id => id !== sectionId)
-        : [...prev, sectionId]
-    )
+  // Guardar estado del sidebar
+  useEffect(() => {
+    localStorage.setItem('adminSidebarCollapsed', JSON.stringify(sidebarCollapsed))
+  }, [sidebarCollapsed])
+
+  // Guardar última ruta
+  useEffect(() => {
+    if (isAuthenticated && !isLocked) {
+      localStorage.setItem('lastPath', location.pathname)
+    }
+  }, [location.pathname, isAuthenticated, isLocked])
+
+  // Si está bloqueado, mostrar pantalla de bloqueo
+  if (isAuthenticated && isLocked) {
+    return <LockScreen onUnlock={() => setIsLocked(false)} />
   }
 
-  const menuSections: MenuSection[] = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: <Home className="w-5 h-5" />
-    },
-    {
-      id: 'projects',
-      label: 'Proyectos',
-      icon: <FolderOpen className="w-5 h-5" />,
-      subItems: [
-        { id: 'all-projects', label: 'Todos', href: '/projects' },
-        { id: 'active-projects', label: 'Activos', href: '/projects/active', badge: 12 },
-        { id: 'completed-projects', label: 'Completados', href: '/projects/completed' },
-        { id: 'archived-projects', label: 'Archivados', href: '/projects/archived' }
-      ]
-    },
-    {
-      id: 'inventory',
-      label: 'Inventario',
-      icon: <Package className="w-5 h-5" />,
-      subItems: [
-        { id: 'equipment', label: 'Equipos', href: '/inventory/equipment' },
-        { id: 'maintenance', label: 'Mantenimiento', href: '/inventory/maintenance', badge: 3 },
-        { id: 'requests', label: 'Solicitudes', href: '/inventory/requests' }
-      ]
-    },
-    {
-      id: 'users',
-      label: 'Usuarios',
-      icon: <Users className="w-5 h-5" />,
-      subItems: [
-        { id: 'staff', label: 'Personal', href: '/users/staff' },
-        { id: 'clients', label: 'Clientes', href: '/users/clients' },
-        { id: 'permissions', label: 'Permisos', href: '/users/permissions' }
-      ]
-    },
-    {
-      id: 'service-requests',
-      label: 'Solicitudes',
-      icon: <UserCheck className="w-5 h-5" />,
-      subItems: [
-        { id: 'pending', label: 'Pendientes', href: '/requests/pending', badge: 8 },
-        { id: 'in-progress', label: 'En Proceso', href: '/requests/in-progress' },
-        { id: 'completed', label: 'Completadas', href: '/requests/completed' }
-      ]
-    }
-  ]
+  const toggleSidebarCollapse = (): void => {
+    setSidebarCollapsed(!sidebarCollapsed)
+  }
 
-  const bottomMenuItems = [
-    {
-      id: 'notifications',
-      label: 'Notificaciones',
-      icon: <Bell className="w-5 h-5" />,
-      badge: 5
-    },
-    {
-      id: 'settings',
-      label: 'Configuración',
-      icon: <Settings className="w-5 h-5" />
+  const handleRightSidebarItemClick = (section: RightSidebarSection): void => {
+    if (rightSidebarSection === section) {
+      setRightSidebarSection(null)
+    } else {
+      setRightSidebarSection(section)
     }
-  ]
+  }
+
+  const closeRightSidebar = (): void => {
+    setRightSidebarSection(null)
+  }
+
+  // Funciones para móvil - solo una barra a la vez
+  const toggleMobileLeftSidebar = (): void => {
+    if (mobileRightSidebarOpen) {
+      setMobileRightSidebarOpen(false)
+      setRightSidebarSection(null)
+    }
+    setMobileLeftSidebarOpen(!mobileLeftSidebarOpen)
+  }
+
+  const toggleMobileRightSidebar = (): void => {
+    if (mobileLeftSidebarOpen) {
+      setMobileLeftSidebarOpen(false)
+    }
+    setMobileRightSidebarOpen(!mobileRightSidebarOpen)
+    if (!mobileRightSidebarOpen) {
+      setRightSidebarSection(mobilePanelSection)
+    } else {
+      setRightSidebarSection(null)
+    }
+  }
+
+  const handleMobilePanelSectionChange = (section: RightSidebarSection): void => {
+    setMobilePanelSection(section)
+    setRightSidebarSection(section)
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${
-        isSidebarCollapsed ? 'w-16' : 'w-72'
-      }`}>
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              {!isSidebarCollapsed && (
-                <div className="flex items-center space-x-3">
-                  <img src="/logo-white.png" alt="Medialab" className="h-8 w-auto filter brightness-0" />
-                  <span className="font-semibold text-gray-900">Medialab</span>
-                </div>
-              )}
-              <button
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                {isSidebarCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
+    <div className="flex h-screen bg-gray-900 overflow-hidden relative">
+      {/* Overlay para móviles - sidebar izquierdo */}
+      <div 
+        className={`fixed inset-0 z-20 transition-opacity bg-black/50 lg:hidden ${
+          mobileLeftSidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'
+        }`}
+        onClick={() => setMobileLeftSidebarOpen(false)}
+      />
 
-          {/* Menu Items */}
-          <div className="flex-1 overflow-y-auto py-4">
-            <nav className="space-y-1 px-3">
-              {menuSections.map((section) => (
-                <div key={section.id}>
-                  <button
-                    onClick={() => section.subItems && toggleSection(section.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors group ${
-                      section.id === 'projects' ? 'bg-gray-900 text-white hover:bg-gray-800' : ''
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      {section.icon}
-                      {!isSidebarCollapsed && <span className="font-medium">{section.label}</span>}
-                    </div>
-                    {!isSidebarCollapsed && section.subItems && (
-                      expandedSections.includes(section.id) ? 
-                        <ChevronDown className="w-4 h-4" /> : 
-                        <ChevronRight className="w-4 h-4" />
-                    )}
-                  </button>
+      {/* Overlay para móviles - sidebar derecho */}
+      <div 
+        className={`fixed inset-0 z-20 transition-opacity bg-black/50 lg:hidden ${
+          mobileRightSidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'
+        }`}
+        onClick={() => setMobileRightSidebarOpen(false)}
+      />
 
-                  {/* Sub Items */}
-                  {!isSidebarCollapsed && section.subItems && expandedSections.includes(section.id) && (
-                    <div className="ml-6 mt-2 space-y-1">
-                      {section.subItems.map((item) => (
-                        <a
-                          key={item.id}
-                          href={item.href}
-                          className="flex items-center justify-between px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors group"
-                        >
-                          <span className="text-sm">{item.label}</span>
-                          {item.badge && (
-                            <span className="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded-full font-medium">
-                              {item.badge}
-                            </span>
-                          )}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </nav>
-          </div>
+      {/* Sidebar izquierdo - Desktop */}
+      <div 
+        className={`hidden lg:flex inset-y-0 left-0 z-30 transition-all flex-col ${
+          sidebarCollapsed ? 'w-20' : 'w-72'
+        }`}
+      >
+        <AdminSidebar 
+          onClose={() => {}} 
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapse}
+        />
+      </div>
 
-          {/* Bottom Menu */}
-          <div className="border-t border-gray-200 p-3 space-y-1">
-            {bottomMenuItems.map((item) => (
-              <button
-                key={item.id}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  {item.icon}
-                  {!isSidebarCollapsed && <span className="font-medium">{item.label}</span>}
-                </div>
-                {!isSidebarCollapsed && item.badge && (
-                  <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-medium">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            ))}
+      {/* Sidebar izquierdo - Móvil */}
+      <div 
+        className={`fixed inset-y-0 left-0 z-30 w-72 transition-all transform lg:hidden ${
+          mobileLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <AdminSidebar 
+          onClose={() => setMobileLeftSidebarOpen(false)} 
+          collapsed={false}
+        />
+      </div>
 
-            {/* User Profile & Logout */}
-            <div className="pt-3 border-t border-gray-200">
-              {!isSidebarCollapsed && (
-                <div className="px-3 py-2 mb-2">
-                  <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-              )}
-              <button
-                onClick={logout}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-                {!isSidebarCollapsed && <span className="font-medium">Cerrar Sesión</span>}
-              </button>
-            </div>
-          </div>
+      {/* Contenido principal */}
+      <div className="flex flex-col flex-1 overflow-hidden lg:p-3 md:p-2 p-1 lg:pb-3 md:pb-2 pb-1">
+        <div className="flex flex-col flex-1 bg-gray-800 lg:rounded-xl md:rounded-lg rounded-md shadow-lg overflow-hidden lg:mb-0 md:mb-12 mb-10">
+          <AdminNavbar />
+          <main className="flex-1 overflow-y-auto bg-gray-50 lg:p-6 md:p-4 p-3 lg:pt-4 md:pt-3 pt-2 pb-14 sm:pb-3">
+            {children}
+          </main>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <Bell className="w-5 h-5" />
-              </button>
-              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </header>
+      {/* Sidebar derecho - Desktop */}
+      <div className={`hidden lg:flex transition-all duration-300 ${
+        rightSidebarSection ? 'w-96' : 'w-20'
+      } bg-gray-900`}>
+        {/* Barra de iconos siempre visible */}
+        <div className="w-20 flex flex-col">
+          <div className="p-4 border-b border-white/10"></div>
+          <div className="p-2 space-y-2">
+            <button 
+              onClick={() => handleRightSidebarItemClick('tasks')}
+              className={`w-full flex flex-col items-center p-3 rounded-lg transition-all duration-200 group ${
+                rightSidebarSection === 'tasks' 
+                  ? 'bg-white/10 text-purple-400' 
+                  : 'hover:bg-white/10 text-white/70 hover:text-white'
+              }`}
+              title="Mis Tareas"
+            >
+              <ClipboardListIcon className="h-6 w-6" />
+              <span className="w-2 h-2 bg-yellow-500 rounded-full mt-1"></span>
+            </button>
+            
+            <button 
+              onClick={() => handleRightSidebarItemClick('notifications')}
+              className={`w-full flex flex-col items-center p-3 rounded-lg transition-all duration-200 group ${
+                rightSidebarSection === 'notifications' 
+                  ? 'bg-white/10 text-purple-400' 
+                  : 'hover:bg-white/10 text-white/70 hover:text-white'
+              }`}
+              title="Notificaciones"
+            >
+              <BellIcon className="h-6 w-6" />
+              <span className="w-2 h-2 bg-purple-500 rounded-full mt-1"></span>
+            </button>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+            <button 
+              onClick={() => handleRightSidebarItemClick('users')}
+              className={`w-full flex flex-col items-center p-3 rounded-lg transition-all duration-200 group ${
+                rightSidebarSection === 'users' 
+                  ? 'bg-white/10 text-purple-400' 
+                  : 'hover:bg-white/10 text-white/70 hover:text-white'
+              }`}
+              title="Usuarios Online"
+            >
+              <GroupIcon className="h-6 w-6" />
+              <span className="w-2 h-2 bg-green-500 rounded-full mt-1"></span>
+            </button>
+
+            <button 
+              onClick={() => handleRightSidebarItemClick('calendar')}
+              className={`w-full flex flex-col items-center p-3 rounded-lg transition-all duration-200 group ${
+                rightSidebarSection === 'calendar' 
+                  ? 'bg-white/10 text-purple-400' 
+                  : 'hover:bg-white/10 text-white/70 hover:text-white'
+              }`}
+              title="Mi Agenda"
+            >
+              <CalendarDaysIcon className="h-6 w-6" />
+              <span className="w-2 h-2 bg-blue-500 rounded-full mt-1"></span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Panel expandido */}
+        {rightSidebarSection && (
+          <div className="flex-1 border-l border-white/10">
+            <AdminRightSidebar 
+              activeSection={rightSidebarSection}
+              onClose={closeRightSidebar}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Sidebar derecho - Móvil con tabs */}
+      <div 
+        className={`fixed inset-y-0 right-0 z-30 w-80 transition-all transform lg:hidden ${
+          mobileRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+        } bg-gray-900`}
+      >
+        {/* Header con tabs */}
+        <div className="p-4 border-b border-white/10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">Panel de Control</h2>
+            <button 
+              className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+              onClick={() => setMobileRightSidebarOpen(false)}
+            >
+              <XIcon className="h-5 w-5" />
+            </button>
+          </div>
+          
+          {/* Tabs para cambiar sección */}
+          <div className="flex bg-white/10 rounded-lg p-1 text-xs">
+            <button 
+              onClick={() => handleMobilePanelSectionChange('calendar')}
+              className={`flex-1 py-2 px-2 rounded-md font-medium transition-all duration-200 ${
+                mobilePanelSection === 'calendar' 
+                  ? 'bg-purple-600 text-white' 
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              Agenda
+            </button>
+            <button 
+              onClick={() => handleMobilePanelSectionChange('tasks')}
+              className={`flex-1 py-2 px-2 rounded-md font-medium transition-all duration-200 ${
+                mobilePanelSection === 'tasks' 
+                  ? 'bg-purple-600 text-white' 
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              Tareas
+            </button>
+            <button 
+              onClick={() => handleMobilePanelSectionChange('notifications')}
+              className={`flex-1 py-2 px-2 rounded-md font-medium transition-all duration-200 ${
+                mobilePanelSection === 'notifications' 
+                  ? 'bg-purple-600 text-white' 
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              Actividad
+            </button>
+            <button 
+              onClick={() => handleMobilePanelSectionChange('users')}
+              className={`flex-1 py-2 px-2 rounded-md font-medium transition-all duration-200 ${
+                mobilePanelSection === 'users' 
+                  ? 'bg-purple-600 text-white' 
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              Usuarios
+            </button>
+          </div>
+        </div>
+        
+        {/* Contenido según la sección */}
+        <div className="flex-1 overflow-hidden">
+          <AdminRightSidebar 
+            activeSection={mobilePanelSection}
+            onClose={() => {}}
+          />
+        </div>
+      </div>
+
+      {/* Bottom bar móvil */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 lg:hidden bg-gray-900 px-3 py-2">
+        <div className="flex items-center justify-center max-w-xs mx-auto">
+          <button
+            onClick={toggleMobileLeftSidebar}
+            className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 flex-1 ${
+              mobileLeftSidebarOpen 
+                ? 'bg-purple-600 text-white' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <MenuIcon className="h-4 w-4" />
+            <span className="text-xs mt-0.5 font-medium">Menú</span>
+          </button>
+
+          <button
+            onClick={toggleMobileRightSidebar}
+            className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 flex-1 ${
+              mobileRightSidebarOpen 
+                ? 'bg-purple-600 text-white' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <ClipboardListIcon className="h-4 w-4" />
+            <span className="text-xs mt-0.5 font-medium">Panel</span>
+          </button>
+        </div>
       </div>
     </div>
   )

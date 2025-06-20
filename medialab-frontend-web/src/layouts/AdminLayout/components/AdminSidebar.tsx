@@ -1,432 +1,471 @@
-// src/layouts/AdminLayout/components/AdminSidebar.tsx
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/context/AuthContext'
-import AdminSidebarFooter from './AdminSidebarFooter'
-import UserAvatar from './UserAvatar'
 import { 
-  Home, 
-  FolderOpen, 
-  Package, 
-  Users, 
-  UserCheck, 
+  Home,
+  FolderOpen,
+  Package,
+  Users,
+  UserCheck,
+  Calendar,
   Settings,
-  X,
-  ChevronDown,
-  ChevronLeft,
+  MoreHorizontal,
   ChevronRight,
-  ArrowUpRight,
-  Calendar
+  Mic,
+  GraduationCap,
+  Folder,
+  PlayCircle,
+  Star,
+  X
 } from 'lucide-react'
 
-interface AdminSidebarProps {
-  onClose?: () => void
-  collapsed?: boolean
-  onToggleCollapse?: () => void
+interface TooltipProps {
+  children: React.ReactNode
+  content: string
+  side?: 'right' | 'left'
 }
 
-interface SidebarItemConfig {
+const Tooltip = ({ children, content, side = 'right' }: TooltipProps) => (
+  <div className="group relative">
+    {children}
+    <div className={`absolute ${side === 'right' ? 'left-full ml-3' : 'right-full mr-3'} top-1/2 -translate-y-1/2 px-3 py-2 bg-zinc-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 shadow-lg border border-zinc-700`}>
+      {content}
+      <div className={`absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-zinc-800 border-l border-t border-zinc-700 rotate-45 ${
+        side === 'right' ? '-left-1' : '-right-1'
+      }`} />
+    </div>
+  </div>
+)
+
+interface SubMenuItem {
   id: string
-  title: string
-  path?: string
+  label: string
   icon: React.ReactNode
-  children?: SidebarItemConfig[]
-  isOpen?: boolean
+  path: string
   badge?: number
-  permissionRequired?: string
 }
 
-const AdminSidebar = ({ onClose, collapsed = false, onToggleCollapse }: AdminSidebarProps): React.JSX.Element => {
+interface NavItem {
+  id: string
+  label: string
+  icon: React.ReactNode
+  path?: string
+  badge?: number
+  subItems?: SubMenuItem[]
+}
+
+interface MainSidebarProps {
+  navItems: NavItem[]
+  activeSubmenu: string | null
+  onItemClick: (item: NavItem) => void
+  isParentActive: (item: NavItem) => boolean
+  isMobile?: boolean
+  onClose?: (() => void) | undefined
+}
+
+const MainSidebar = ({ navItems, activeSubmenu, onItemClick, isParentActive, isMobile = false, onClose }: MainSidebarProps) => (
+  <div className={`${isMobile ? 'w-64' : 'w-16'} bg-zinc-950 border-r border-zinc-700/50 flex flex-col relative`}>
+    {/* Logo */}
+    <div className={`${isMobile ? 'p-4' : 'p-3'} border-b border-zinc-700/30 relative flex items-center ${isMobile ? 'justify-between' : 'justify-center'}`}>
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-stone-50 to-white rounded-xl flex items-center justify-center">
+          <img src="/logo-white.png" alt="Medialab" className="w-6 h-6 filter invert" />
+        </div>
+        {isMobile && (
+          <div>
+            <h1 className="text-white font-bold text-lg">Medialab</h1>
+            <p className="text-zinc-400 text-sm">Personal plan</p>
+          </div>
+        )}
+      </div>
+      
+      {isMobile && onClose && (
+        <button
+          onClick={onClose}
+          className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-all duration-200"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
+    </div>
+
+    {/* Navigation */}
+    <nav className={`flex-1 ${isMobile ? 'p-3' : 'p-2'} relative`}>
+      <div className="space-y-1">
+        {navItems.map((item) => (
+          isMobile ? (
+            // Vista móvil expandida
+            <div key={item.id}>
+              {item.subItems ? (
+                <button
+                  onClick={() => onItemClick(item)}
+                  className={`relative w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-300 group ${
+                    isParentActive(item)
+                      ? 'bg-gradient-to-r from-stone-50/20 to-white/20 text-white shadow-lg'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <div className={`transition-all duration-300 ${
+                    isParentActive(item) ? 'scale-110' : 'group-hover:scale-105'
+                  }`}>
+                    {item.icon}
+                  </div>
+                  <span className="font-medium text-sm flex-1">{item.label}</span>
+                  {item.badge && (
+                    <span className="px-2 py-0.5 text-xs rounded-full font-bold bg-stone-50/20 text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                  <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${
+                    activeSubmenu === item.id ? 'rotate-90' : ''
+                  }`} />
+                </button>
+              ) : (
+                <Link
+                  to={item.path || '#'}
+                  onClick={onClose}
+                  className={`relative w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-300 group ${
+                    isParentActive(item)
+                      ? 'bg-gradient-to-r from-stone-50/20 to-white/20 text-white shadow-lg'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <div className={`transition-all duration-300 ${
+                    isParentActive(item) ? 'scale-110' : 'group-hover:scale-105'
+                  }`}>
+                    {item.icon}
+                  </div>
+                  <span className="font-medium text-sm flex-1">{item.label}</span>
+                  {item.badge && (
+                    <span className="px-2 py-0.5 text-xs rounded-full font-bold bg-stone-50/20 text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              )}
+              
+              {/* Submenu móvil */}
+              {item.subItems && activeSubmenu === item.id && (
+                <div className="mt-1 ml-4 space-y-1">
+                  {item.subItems.map((subItem) => (
+                    <Link
+                      key={subItem.id}
+                      to={subItem.path}
+                      onClick={onClose}
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                        location.pathname === subItem.path
+                          ? 'bg-stone-50/10 text-stone-50'
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30'
+                      }`}
+                    >
+                      {subItem.icon}
+                      <span className="text-sm">{subItem.label}</span>
+                      {subItem.badge && (
+                        <span className="px-1.5 py-0.5 text-xs rounded-full font-bold bg-zinc-800/50 text-zinc-400 ml-auto">
+                          {subItem.badge}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            // Vista desktop con tooltips
+            <Tooltip key={item.id} content={item.label}>
+              {item.subItems ? (
+                <button
+                  onClick={() => onItemClick(item)}
+                  className={`relative w-full flex items-center justify-center p-3 rounded-xl transition-all duration-300 group ${
+                    isParentActive(item)
+                      ? 'bg-gradient-to-r from-stone-50/20 to-white/20 text-white shadow-lg'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <div className={`transition-all duration-300 ${
+                    isParentActive(item) ? 'scale-110' : 'group-hover:scale-105'
+                  }`}>
+                    {item.icon}
+                  </div>
+                  
+                  {item.badge && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-stone-50 to-white rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-xs text-zinc-900 font-bold">{item.badge}</span>
+                    </div>
+                  )}
+                  
+                  <ChevronRight className={`absolute bottom-1 right-1 w-3 h-3 transition-transform duration-300 ${
+                    activeSubmenu === item.id ? 'rotate-90' : ''
+                  }`} />
+                  
+                  {isParentActive(item) && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-stone-50 to-white rounded-r-full" />
+                  )}
+                </button>
+              ) : (
+                <Link
+                  to={item.path || '#'}
+                  className={`relative w-full flex items-center justify-center p-3 rounded-xl transition-all duration-300 group ${
+                    isParentActive(item)
+                      ? 'bg-gradient-to-r from-stone-50/20 to-white/20 text-white shadow-lg'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <div className={`transition-all duration-300 ${
+                    isParentActive(item) ? 'scale-110' : 'group-hover:scale-105'
+                  }`}>
+                    {item.icon}
+                  </div>
+                  
+                  {item.badge && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-stone-50 to-white rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-xs text-zinc-900 font-bold">{item.badge}</span>
+                    </div>
+                  )}
+                  
+                  {isParentActive(item) && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-stone-50 to-white rounded-r-full" />
+                  )}
+                </Link>
+              )}
+            </Tooltip>
+          )
+        ))}
+      </div>
+    </nav>
+
+    {/* Bottom section */}
+    <div className={`${isMobile ? 'p-3' : 'p-2'} border-t border-zinc-700/30 relative`}>
+      {isMobile ? (
+        <button className="relative flex items-center space-x-3 w-full px-3 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-xl transition-all duration-300">
+          <MoreHorizontal className="w-5 h-5" />
+          <span className="font-medium text-sm">Más opciones</span>
+        </button>
+      ) : (
+        <Tooltip content="Más opciones">
+          <button className="relative flex items-center justify-center w-full p-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-xl transition-all duration-300 group">
+            <div className="transition-all duration-300 group-hover:scale-105">
+              <MoreHorizontal className="w-5 h-5" />
+            </div>
+          </button>
+        </Tooltip>
+      )}
+    </div>
+  </div>
+)
+
+interface SecondarySidebarProps {
+  activeSubmenu: string | null
+  navItems: NavItem[]
+  isActive: (path: string) => boolean
+  onClose: () => void
+}
+
+const SecondarySidebar = ({ activeSubmenu, navItems, isActive, onClose }: SecondarySidebarProps) => (
+  <div className={`bg-stone-50 border-r border-stone-200 transition-all duration-300 hidden md:block ${
+    activeSubmenu ? 'w-64 opacity-100' : 'w-0 opacity-0 overflow-hidden'
+  }`}>
+    {activeSubmenu && (
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-stone-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-zinc-900 font-semibold text-lg">
+                {navItems.find(item => item.id === activeSubmenu)?.label}
+              </h3>
+              <p className="text-zinc-600 text-sm mt-1">
+                {navItems.find(item => item.id === activeSubmenu)?.subItems?.length} elementos
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-stone-200 rounded-lg transition-all duration-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Sub Navigation */}
+        <nav className="flex-1 p-3">
+          <div className="space-y-1">
+            {navItems
+              .find(item => item.id === activeSubmenu)
+              ?.subItems?.map((subItem) => (
+                <Link
+                  key={subItem.id}
+                  to={subItem.path}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                    isActive(subItem.path)
+                      ? 'bg-zinc-900 text-white shadow-lg'
+                      : 'text-zinc-600 hover:text-zinc-900 hover:bg-stone-100'
+                  }`}
+                >
+                  <div className={`transition-all duration-300 ${
+                    isActive(subItem.path) ? 'scale-110 text-white' : 'group-hover:scale-105'
+                  }`}>
+                    {subItem.icon}
+                  </div>
+                  <span className="font-medium text-sm flex-1">{subItem.label}</span>
+                  {subItem.badge && (
+                    <span className={`px-2 py-0.5 text-xs rounded-full font-bold ${
+                      isActive(subItem.path)
+                        ? 'bg-white/20 text-white'
+                        : 'bg-zinc-200 text-zinc-600'
+                    }`}>
+                      {subItem.badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
+          </div>
+        </nav>
+      </div>
+    )}
+  </div>
+)
+
+interface AdminSidebarProps {
+  className?: string
+  isMobile?: boolean
+  onClose?: () => void
+}
+
+const AdminSidebar = ({ className = '', isMobile = false, onClose }: AdminSidebarProps): React.JSX.Element => {
   const location = useLocation()
-  const { user } = useAuth()
-  
-  // Estado para manejar la apertura/cierre de menús
-  const [menuState, setMenuState] = useState({
-    projectsOpen: false,
-    inventoryOpen: false,
-    usersOpen: false,
-    requestsOpen: false
-  })
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null)
 
-  // Estado para expansión temporal cuando se hace clic en modo colapsado
-  const [tempExpanded, setTempExpanded] = useState(false)
-
-  // Configuración del sidebar
-  const sidebarItems: SidebarItemConfig[] = [
+  const navItems: NavItem[] = [
     {
       id: 'dashboard',
-      title: 'Dashboard',
-      path: '/admin/dashboard',
-      icon: <Home className="w-5 h-5" />
+      label: 'Dashboard',
+      icon: <Home className="w-5 h-5" />,
+      path: '/admin/dashboard'
     },
     {
       id: 'calendar',
-      title: 'Calendario',
-      path: '/admin/calendar',
-      icon: <Calendar className="w-5 h-5" />
+      label: 'Calendario',
+      icon: <Calendar className="w-5 h-5" />,
+      path: '/admin/calendar'
     },
     {
       id: 'projects',
-      title: 'Proyectos',
+      label: 'Proyectos',
       icon: <FolderOpen className="w-5 h-5" />,
-      isOpen: menuState.projectsOpen,
-      children: [
-        { id: 'all-projects', title: 'Todos', path: '/admin/projects', icon: <FolderOpen className="w-4 h-4" /> },
-        { id: 'active-projects', title: 'Activos', path: '/admin/projects/active', icon: <FolderOpen className="w-4 h-4" />, badge: 12 },
-        { id: 'completed-projects', title: 'Completados', path: '/admin/projects/completed', icon: <FolderOpen className="w-4 h-4" /> },
-        { id: 'archived-projects', title: 'Archivados', path: '/admin/projects/archived', icon: <FolderOpen className="w-4 h-4" /> }
+      badge: 12,
+      subItems: [
+        {
+          id: 'projects-general',
+          label: 'General',
+          icon: <Folder className="w-4 h-4" />,
+          path: '/admin/projects/general',
+          badge: 5
+        },
+        {
+          id: 'projects-podcast',
+          label: 'Podcast',
+          icon: <Mic className="w-4 h-4" />,
+          path: '/admin/projects/podcast',
+          badge: 3
+        },
+        {
+          id: 'projects-courses',
+          label: 'Cursos',
+          icon: <GraduationCap className="w-4 h-4" />,
+          path: '/admin/projects/courses',
+          badge: 4
+        },
+        {
+          id: 'projects-videos',
+          label: 'Videos',
+          icon: <PlayCircle className="w-4 h-4" />,
+          path: '/admin/projects/videos'
+        }
       ]
     },
     {
       id: 'inventory',
-      title: 'Inventario',
+      label: 'Inventario',
       icon: <Package className="w-5 h-5" />,
-      isOpen: menuState.inventoryOpen,
-      children: [
-        { id: 'equipment', title: 'Equipos', path: '/admin/inventory/equipment', icon: <Package className="w-4 h-4" /> },
-        { id: 'maintenance', title: 'Mantenimiento', path: '/admin/inventory/maintenance', icon: <Package className="w-4 h-4" />, badge: 3 },
-        { id: 'requests', title: 'Solicitudes', path: '/admin/inventory/requests', icon: <Package className="w-4 h-4" /> }
-      ]
+      path: '/admin/inventory'
     },
     {
       id: 'users',
-      title: 'Usuarios',
+      label: 'Usuarios',
       icon: <Users className="w-5 h-5" />,
-      isOpen: menuState.usersOpen,
-      children: [
-        { id: 'staff', title: 'Personal', path: '/admin/users/staff', icon: <Users className="w-4 h-4" /> },
-        { id: 'clients', title: 'Clientes', path: '/admin/users/clients', icon: <Users className="w-4 h-4" /> },
-        { id: 'permissions', title: 'Permisos', path: '/admin/users/permissions', icon: <Users className="w-4 h-4" /> }
+      subItems: [
+        {
+          id: 'users-all',
+          label: 'Todos los usuarios',
+          icon: <Users className="w-4 h-4" />,
+          path: '/admin/users/all'
+        },
+        {
+          id: 'users-admins',
+          label: 'Administradores',
+          icon: <Star className="w-4 h-4" />,
+          path: '/admin/users/admins'
+        },
+        {
+          id: 'users-clients',
+          label: 'Clientes',
+          icon: <UserCheck className="w-4 h-4" />,
+          path: '/admin/users/clients'
+        }
       ]
     },
     {
       id: 'requests',
-      title: 'Solicitudes',
+      label: 'Solicitudes',
       icon: <UserCheck className="w-5 h-5" />,
-      isOpen: menuState.requestsOpen,
-      children: [
-        { id: 'pending', title: 'Pendientes', path: '/admin/requests/pending', icon: <UserCheck className="w-4 h-4" />, badge: 8 },
-        { id: 'in-progress', title: 'En Proceso', path: '/admin/requests/in-progress', icon: <UserCheck className="w-4 h-4" /> },
-        { id: 'completed', title: 'Completadas', path: '/admin/requests/completed', icon: <UserCheck className="w-4 h-4" /> }
-      ]
+      path: '/admin/requests',
+      badge: 8
     },
     {
       id: 'settings',
-      title: 'Configuración',
-      path: '/admin/settings',
-      icon: <Settings className="w-5 h-5" />
+      label: 'Configuración',
+      icon: <Settings className="w-5 h-5" />,
+      path: '/admin/settings'
     }
   ]
 
-  // Función para verificar si hay items activos en un menú
-  const hasActiveItem = (items: SidebarItemConfig[]): boolean => {
-    return items.some(item => location.pathname.startsWith(item.path || ''))
-  }
-
-  // Auto-abrir menús si hay un item activo
-  useEffect(() => {
-    const newMenuState = { ...menuState }
-    
-    sidebarItems.forEach(item => {
-      if (item.children && hasActiveItem(item.children)) {
-        switch (item.id) {
-          case 'projects':
-            newMenuState.projectsOpen = true
-            break
-          case 'inventory':
-            newMenuState.inventoryOpen = true
-            break
-          case 'users':
-            newMenuState.usersOpen = true
-            break
-          case 'requests':
-            newMenuState.requestsOpen = true
-            break
-        }
-      }
-    })
-    
-    setMenuState(newMenuState)
-  }, [location.pathname])
-
-  // Función para alternar menús
-  const toggleMenu = (menuId: string): void => {
-    setMenuState(prev => ({
-      ...prev,
-      [`${menuId}Open`]: !prev[`${menuId}Open` as keyof typeof prev]
-    }))
-  }
-
-  // Función para manejar clic en menú colapsado
-  const handleCollapsedMenuClick = (menuId: string): void => {
-    setTempExpanded(true)
-    setMenuState(prev => ({
-      ...prev,
-      [`${menuId}Open`]: true
-    }))
-  }
-
-  // Función para cerrar expansión temporal
-  const closeTempExpansion = (): void => {
-    setTempExpanded(false)
-    setMenuState({
-      projectsOpen: false,
-      inventoryOpen: false,
-      usersOpen: false,
-      requestsOpen: false
-    })
-  }
-
-  // Función para manejar clic en items
-  const handleMenuItemClick = (): void => {
-    if (onClose) {
-      onClose()
+  const isActive = (path: string) => location.pathname === path
+  
+  const isParentActive = (item: NavItem) => {
+    if (item.path && isActive(item.path)) return true
+    if (item.subItems) {
+      return item.subItems.some(subItem => isActive(subItem.path))
     }
-    if (tempExpanded) {
-      closeTempExpansion()
-    }
+    return false
   }
 
-  // Determinar si debe mostrar expandido
-  const shouldShowExpanded = !collapsed || tempExpanded
-
-  // Renderizar item de menú
-  const renderMenuItem = (item: SidebarItemConfig, isCollapsed: boolean = false): React.JSX.Element => {
-    if (item.children) {
-      const hasActive = hasActiveItem(item.children)
-      
-      // En modo colapsado, mostrar solo el ícono
-      if (isCollapsed && !tempExpanded) {
-        return (
-          <li key={item.id}>
-            <button
-              onClick={() => handleCollapsedMenuClick(item.id)}
-              className={`flex items-center justify-center p-3 rounded-lg transition-all duration-200 w-full relative overflow-hidden group ${
-                hasActive ? 'text-purple-400 bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5'
-              }`}
-              title={item.title}
-            >
-              <span className={`text-lg relative z-10 transition-transform duration-200 group-hover:scale-110`}>
-                {item.icon}
-              </span>
-              <span className="absolute inset-0 bg-white/20 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 ease-out"></span>
-            </button>
-          </li>
-        )
-      }
-      
-      // Modo expandido
-      return (
-        <li key={item.id}>
-          <button
-            onClick={() => toggleMenu(item.id)}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group relative overflow-hidden ${
-              hasActive ? 'text-purple-400 bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <div className="flex items-center relative z-10">
-              <span className="mr-3 text-sm transition-transform group-hover:scale-105">
-                {item.icon}
-              </span>
-              <span className="font-medium text-sm">{item.title}</span>
-            </div>
-            <div className="flex items-center relative z-10">
-              <span className={`transition-all duration-200 ${
-                item.isOpen ? 'rotate-180' : ''
-              }`}>
-                <ChevronDown className="h-4 w-4" />
-              </span>
-            </div>
-            <span className="absolute inset-0 bg-white/20 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 ease-out"></span>
-          </button>
-          
-          {item.isOpen && item.children && (
-            <ul className="pl-9 mt-1 space-y-1">
-              {item.children.map((child) => (
-                <li key={child.id}>
-                  <Link
-                    to={child.path || '#'}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 text-sm group ${
-                      location.pathname === child.path 
-                        ? 'text-purple-400 bg-white/10 font-medium' 
-                        : 'text-white/60 hover:text-white/90 hover:bg-white/5'
-                    }`}
-                    onClick={handleMenuItemClick}
-                  >
-                    <div className="flex items-center">
-                      <span className="mr-3">
-                        {child.icon}
-                      </span>
-                      <span>{child.title}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {child.badge && (
-                        <span className="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded-full font-medium">
-                          {child.badge}
-                        </span>
-                      )}
-                      <ArrowUpRight className={`h-3 w-3 transition-opacity duration-200 ${
-                        location.pathname === child.path 
-                          ? 'opacity-100 text-purple-400' 
-                          : 'opacity-0 group-hover:opacity-100 text-white/50'
-                      }`} />
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </li>
-      )
+  const handleMainItemClick = (item: NavItem) => {
+    if (item.subItems) {
+      setActiveSubmenu(activeSubmenu === item.id ? null : item.id)
+    } else {
+      setActiveSubmenu(null)
     }
-    
-    // Items regulares
-    if (isCollapsed && !tempExpanded) {
-      return (
-        <li key={item.id}>
-          <Link
-            to={item.path || '#'}
-            className={`flex items-center justify-center p-3 rounded-lg transition-all duration-200 group relative overflow-hidden ${
-              location.pathname === item.path 
-                ? 'bg-white/10 text-purple-400' 
-                : 'text-white/70 hover:text-white hover:bg-white/5'
-            }`}
-            onClick={handleMenuItemClick}
-            title={item.title}
-          >
-            <span className="text-lg transition-transform group-hover:scale-110 relative z-10">
-              {item.icon}
-            </span>
-            <span className="absolute inset-0 bg-white/20 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 ease-out"></span>
-          </Link>
-        </li>
-      )
-    }
-    
-    return (
-      <li key={item.id}>
-        <Link
-          to={item.path || '#'}
-          className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group relative overflow-hidden ${
-            location.pathname === item.path 
-              ? 'bg-white/10 text-purple-400 font-medium' 
-              : 'text-white/70 hover:text-white hover:bg-white/5'
-          }`}
-          onClick={handleMenuItemClick}
-        >
-          <div className="flex items-center relative z-10">
-            <span className="mr-3 text-sm transition-transform group-hover:scale-105">
-              {item.icon}
-            </span>
-            <span className="font-medium text-sm">{item.title}</span>
-          </div>
-          <ArrowUpRight className={`h-4 w-4 transition-all duration-200 relative z-10 ${
-            location.pathname === item.path 
-              ? 'opacity-100 text-purple-400' 
-              : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-1 text-white/50'
-          }`} />
-          <span className="absolute inset-0 bg-white/20 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 ease-out"></span>
-        </Link>
-      </li>
-    )
   }
 
   return (
-    <div className={`h-full flex flex-col bg-gray-900 relative transition-all duration-300 ${
-      tempExpanded ? 'w-72' : shouldShowExpanded ? 'w-full' : 'w-full'
-    }`}>
-      {/* Header */}
-      <div className="p-4 flex items-center justify-between border-b border-white/10 relative">
-        {shouldShowExpanded ? (
-          <>
-            <div className="flex items-center space-x-3">
-              <img src="/logo-white.png" alt="Medialab" className="h-8 w-auto" />
-              <span className="text-2xl font-bold text-white">Medialab</span>
-            </div>
-            {/* Botones según el contexto */}
-            {tempExpanded ? (
-              <button
-                onClick={closeTempExpansion}
-                className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 text-white/70 hover:text-white relative overflow-hidden group"
-              >
-                <X className="h-4 w-4 relative z-10" />
-                <span className="absolute inset-0 bg-white/30 rounded-full scale-0 group-hover:scale-150 transition-transform duration-300 ease-out"></span>
-              </button>
-            ) : (
-              onToggleCollapse && (
-                <button
-                  onClick={onToggleCollapse}
-                  className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 text-white/70 hover:text-white relative overflow-hidden group"
-                >
-                  <ChevronLeft className="h-4 w-4 relative z-10" />
-                  <span className="absolute inset-0 bg-white/30 rounded-full scale-0 group-hover:scale-150 transition-transform duration-300 ease-out"></span>
-                </button>
-              )
-            )}
-          </>
-        ) : (
-          <div className="flex flex-col items-center w-full">
-            <span className="text-lg font-bold text-white mb-2">ML</span>
-            {onToggleCollapse && (
-              <button
-                onClick={onToggleCollapse}
-                className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 text-white/70 hover:text-white relative overflow-hidden group"
-              >
-                <ChevronRight className="h-4 w-4 relative z-10" />
-                <span className="absolute inset-0 bg-white/30 rounded-full scale-0 group-hover:scale-150 transition-transform duration-300 ease-out"></span>
-              </button>
-            )}
-          </div>
-        )}
-        
-        {/* Botón de cerrar móvil */}
-        {onClose && (
-          <button 
-            className="lg:hidden text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
-            onClick={onClose}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
-      </div>
-
-      {/* Tarjeta de usuario */}
-      {shouldShowExpanded ? (
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center">
-            <UserAvatar 
-              user={user}
-              size="lg"
-              className="mr-3"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-medium text-sm truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-white/50 text-xs truncate">
-                {user?.email}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="p-2 border-b border-white/10 flex justify-center">
-          <UserAvatar 
-            user={user}
-            size="md"
-          />
-        </div>
+    <div className={`flex ${className}`}>
+      <MainSidebar 
+        navItems={navItems}
+        activeSubmenu={activeSubmenu}
+        onItemClick={handleMainItemClick}
+        isParentActive={isParentActive}
+        isMobile={isMobile}
+        onClose={onClose}
+      />
+      {/* Secondary Sidebar - Solo en desktop */}
+      {!isMobile && (
+        <SecondarySidebar 
+          activeSubmenu={activeSubmenu}
+          navItems={navItems}
+          isActive={isActive}
+          onClose={() => setActiveSubmenu(null)}
+        />
       )}
-      
-      {/* Navigation */}
-      <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600">
-        <ul className={`space-y-1 ${shouldShowExpanded ? 'px-3' : 'px-2'}`}>
-          {sidebarItems.map(item => renderMenuItem(item, !shouldShowExpanded))}
-        </ul>
-      </nav>
-      
-      {/* Footer */}
-      <AdminSidebarFooter collapsed={!shouldShowExpanded} />
     </div>
   )
 }

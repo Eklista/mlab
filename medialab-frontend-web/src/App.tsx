@@ -1,5 +1,5 @@
 import AppRouter from './AppRouter'
-import { AuthProvider } from '@/modules/auth/context/AuthContext'
+import { AuthProvider } from '@/modules/auth/context/AuthProvider'
 import '@/styles/index.css'
 
 const App = (): React.JSX.Element => {

@@ -1,4 +1,6 @@
-import { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+// src/modules/auth/context/AuthProvider.tsx
+import { useReducer, useEffect, useCallback } from 'react'
+import { AuthContext } from './AuthContext'
 import type { AuthState, AuthContextType, LoginCredentials, User, AuthTokens } from '../types/auth'
 import { authService } from '../services/authService'
 
@@ -76,10 +78,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 }
 
-// Context
-const AuthContext = createContext<AuthContextType | null>(null)
-
-// Provider
 interface AuthProviderProps {
   children: React.ReactNode
 }
@@ -105,7 +103,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.JSX.Element
         }
       } catch (error) {
         console.error('Error loading stored auth:', error)
-        // Clear invalid data
         localStorage.removeItem(STORAGE_KEYS.TOKENS)
         localStorage.removeItem(STORAGE_KEYS.USER)
       }
@@ -121,7 +118,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.JSX.Element
 
       const response = await authService.login(credentials)
 
-      // Store in localStorage
       localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify(response.tokens))
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user))
 
@@ -141,12 +137,10 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.JSX.Element
 
   // Logout function
   const logout = useCallback((): void => {
-    // Clear localStorage
     localStorage.removeItem(STORAGE_KEYS.TOKENS)
     localStorage.removeItem(STORAGE_KEYS.USER)
 
-    // Call API to invalidate tokens (fire and forget)
-    authService.logout().catch(console.error)
+    void authService.logout().catch(console.error)
 
     dispatch({ type: 'LOGOUT' })
   }, [])
@@ -162,7 +156,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.JSX.Element
 
       const response = await authService.refreshToken(state.tokens.refreshToken)
 
-      // Update localStorage
       localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify(response.tokens))
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user))
 
@@ -171,7 +164,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.JSX.Element
         payload: response
       })
     } catch (error) {
-      // If refresh fails, logout user
       logout()
       throw error
     }
@@ -195,13 +187,4 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.JSX.Element
       {children}
     </AuthContext.Provider>
   )
-}
-
-// Hook to use auth context
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
 }

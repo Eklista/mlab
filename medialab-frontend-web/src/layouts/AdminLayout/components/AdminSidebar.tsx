@@ -121,7 +121,7 @@ const MainSidebar = ({ navItems, activeSubmenu, onItemClick, isParentActive, isM
                 </button>
               ) : (
                 <Link
-                  to={item.path || '#'}
+                  to={item.path ?? '#'}
                   onClick={onClose}
                   className={`relative w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-300 group ${
                     isParentActive(item)
@@ -203,7 +203,7 @@ const MainSidebar = ({ navItems, activeSubmenu, onItemClick, isParentActive, isM
                 </button>
               ) : (
                 <Link
-                  to={item.path || '#'}
+                  to={item.path ?? '#'}
                   className={`relative w-full flex items-center justify-center p-3 rounded-xl transition-all duration-300 group ${
                     isParentActive(item)
                       ? 'bg-gradient-to-r from-stone-50/20 to-white/20 text-white shadow-lg'

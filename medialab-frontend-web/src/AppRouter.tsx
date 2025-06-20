@@ -1,6 +1,6 @@
 // src/AppRouter.tsx - Actualizado para usar el nuevo AdminLayout
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/context/AuthContext'
+import { useAuth } from '@/modules/auth/hooks/useAuth'
 import LandingPage from '@/views/public/LandingPage'
 import LoginPage from '@/views/auth/LoginPage'
 import DashboardPage from '@/views/admin/DashboardPage'

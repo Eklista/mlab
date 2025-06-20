@@ -1,6 +1,7 @@
+// src/views/auth/LoginPage.tsx - Arreglar promises
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/context/AuthContext'
+import { useAuth } from '@/modules/auth/hooks/useAuth'
 import { Input, Button, Alert } from '@/modules/auth/components/ui'
 import AuthLayout from '@/layouts/AuthLayout/AuthLayout'
 
@@ -10,20 +11,17 @@ const LoginPage = (): React.JSX.Element => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true })
+      void navigate('/dashboard', { replace: true })
     }
   }, [isAuthenticated, navigate])
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
-    try {
-      await login({ email, password })
-    } catch (err) {
+    void login({ email, password }).catch((err) => {
       console.error('Login failed:', err)
-    }
+    })
   }
 
   return (

@@ -55,7 +55,7 @@ const MobileBottomBar = ({ onMenuToggle, className = '' }: MobileBottomBarProps)
     <div className={`fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-800/50 px-4 py-3 z-50 md:hidden ${className}`}>
       <div className="flex items-center justify-around max-w-md mx-auto">
         {bottomBarItems.map((item) => {
-          const isItemActive = item.isLink ? isActive(item.path || '') : false
+          const isItemActive = item.isLink ? isActive(item.path ?? '') : false
           
           if (item.isLink && item.path) {
             return (

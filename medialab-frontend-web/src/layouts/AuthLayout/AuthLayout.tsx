@@ -7,7 +7,7 @@ const AuthLayout = ({ children, showBackButton = false }: AuthLayoutProps): Reac
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4" 
          style={{
-           backgroundImage: 'url(/auth-background.jpg)',
+           backgroundImage: 'url(/textures/auth-background.jpg)',
            backgroundSize: 'cover',
            backgroundPosition: 'center',
            backgroundRepeat: 'no-repeat'

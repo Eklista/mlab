@@ -22,22 +22,22 @@ const AdminLayout = ({ children }: AdminLayoutProps): React.JSX.Element => {
     <div className="flex h-screen bg-zinc-950 overflow-hidden">
       {/* Desktop Sidebar */}
       <AdminSidebar className="hidden md:flex" />
-      
+     
       {/* Mobile Sidebar Overlay */}
       {isMobileSidebarOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
             onClick={closeMobileSidebar}
           />
-          
+         
           {/* Mobile Sidebar */}
           <div className="fixed left-0 top-0 h-full z-50 md:hidden">
-            <AdminSidebar 
-              className="h-full" 
-              isMobile={true} 
-              onClose={closeMobileSidebar} 
+            <AdminSidebar
+              className="h-full"
+              isMobile={true}
+              onClose={closeMobileSidebar}
             />
           </div>
         </>
@@ -49,7 +49,7 @@ const AdminLayout = ({ children }: AdminLayoutProps): React.JSX.Element => {
         <AdminNavbar />
        
         {/* Main Content */}
-        <main className="flex-1 overflow-auto bg-zinc-950 p-4 md:p-6 pb-20 md:pb-6">
+        <main className="flex-1 overflow-auto [background-image:url('/textures/dashboard-background.jpeg')] bg-zinc-950 bg-cover bg-center p-4 md:p-6 pb-20 md:pb-6">
           <div className="max-w-full">
             {children}
           </div>

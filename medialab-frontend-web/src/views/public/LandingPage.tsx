@@ -1,3 +1,4 @@
+// src/views/public/LandingPage.tsx - Arreglar navigate
 import { useNavigate } from 'react-router-dom'
 import { Film, ArrowRight, Users, Briefcase, Package } from 'lucide-react'
 
@@ -5,7 +6,7 @@ const LandingPage = (): React.JSX.Element => {
   const navigate = useNavigate()
 
   const handleLoginClick = (): void => {
-    navigate('/login')
+    void navigate('/login')
   }
 
   return (

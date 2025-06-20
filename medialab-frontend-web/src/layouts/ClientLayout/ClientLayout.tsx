@@ -8,7 +8,7 @@ import {
   X,
   Plus
 } from 'lucide-react'
-import { useAuth } from '@/modules/auth/context/AuthContext'
+import { useAuth } from '@/modules/auth/hooks/useAuth'
 
 interface ClientLayoutProps {
   children: React.ReactNode

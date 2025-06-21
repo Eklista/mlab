@@ -1,10 +1,17 @@
-// src/AppRouter.tsx - Actualizado para usar el nuevo AdminLayout
+// src/AppRouter.tsx - Actualizado con ProjectsCreatePage
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/hooks/useAuth'
 import LandingPage from '@/views/public/LandingPage'
 import LoginPage from '@/views/auth/LoginPage'
 import DashboardPage from '@/views/admin/DashboardPage'
 import ClientDashboardPage from '@/views/client/ClientDashboardPage'
+import ProjectsGeneralPage from '@/views/admin/projects/ProjectsGeneralPage'
+import ProjectsCreatePage from '@/views/admin/projects/ProjectsCreatePage'
+import ProjectsDetailsPage from '@/views/admin/projects/ProjectDetailsPage'
+import CalendarPage from '@/views/admin/CalendarPage'
+import CoursesPage from '@/views/admin/courses/CoursesPage'
+import CourseDetailPage from '@/views/admin/courses/CourseDetailPage'
+import ClassDetailPage from '@/views/admin/courses/ClassDetailPage'
 import AdminLayout from '@/layouts/AdminLayout/AdminLayout'
 import ClientLayout from '@/layouts/ClientLayout/ClientLayout'
 
@@ -51,7 +58,7 @@ const AppRouter = (): React.JSX.Element => {
         {/* Dashboard redirect */}
         <Route path="/dashboard" element={<DashboardRedirect />} />
         
-        {/* Admin Routes - Usando el nuevo AdminLayout */}
+        {/* Admin Routes */}
         <Route 
           path="/admin/*" 
           element={
@@ -59,8 +66,16 @@ const AppRouter = (): React.JSX.Element => {
               <AdminLayout>
                 <Routes>
                   <Route path="dashboard" element={<DashboardPage />} />
-                  <Route path="calendar" element={<div>Calendario Admin</div>} />
-                  <Route path="projects/*" element={<div>Proyectos Admin</div>} />
+                  <Route path="calendar" element={<CalendarPage />} />
+                  <Route path="projects/general" element={<ProjectsGeneralPage />} />
+                  <Route path="projects/create" element={<ProjectsCreatePage />} />
+                  <Route path="projects/:projectId/details" element={<ProjectsDetailsPage />} />
+                  <Route path="projects/podcast" element={<div>Proyectos Podcast</div>} />
+                  <Route path="projects/courses" element={<CoursesPage />} />
+                  <Route path="courses" element={<CoursesPage />} />
+                  <Route path="courses/:courseId" element={<CourseDetailPage />} />
+                  <Route path="courses/:courseId/classes/:classId" element={<ClassDetailPage />} />
+                  <Route path="projects/videos" element={<div>Proyectos Videos</div>} />
                   <Route path="inventory/*" element={<div>Inventario Admin</div>} />
                   <Route path="users/*" element={<div>Usuarios Admin</div>} />
                   <Route path="requests/*" element={<div>Solicitudes Admin</div>} />

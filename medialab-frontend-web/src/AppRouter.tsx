@@ -1,4 +1,4 @@
-// src/AppRouter.tsx - Con persistencia de ruta arreglada
+// src/AppRouter.tsx - Con settings arreglado
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/hooks/useAuth'
 import LandingPage from '@/views/public/LandingPage'
@@ -20,6 +20,10 @@ import EpisodeDetailPage from '@/views/admin/podcasts/EpisodeDetailPage'
 import InventoryGeneralPage from './views/admin/Inventory/InventoryGeneralPage'
 import SuppliesPage from './views/admin/Inventory/SuppliesPage'
 import UsersManagementPage from '@/views/admin/users/UsersManagementPage'
+import RequestsPage from '@/views/admin/requests/RequestsPage'
+import SettingsLayout from '@/layouts/SettingsLayout/SettingsLayout'
+import SettingsGeneralPage from '@/views/admin/settings/SettingsGeneralPage'
+import EmployeeRolesPage from '@/views/admin/settings/EmployeeRolesPage'
 
 const AppRouter = (): React.JSX.Element => {
   const { isAuthenticated, user } = useAuth()
@@ -85,6 +89,7 @@ const AppRouter = (): React.JSX.Element => {
                 <Routes>
                   <Route path="dashboard" element={<DashboardPage />} />
                   <Route path="calendar" element={<CalendarPage />} />
+                  <Route path="requests" element={<RequestsPage />} />
                   <Route path="projects/general" element={<ProjectsGeneralPage />} />
                   <Route path="projects/create" element={<ProjectsCreatePage />} />
                   <Route path="projects/:projectId/details" element={<ProjectsDetailsPage />} />
@@ -102,11 +107,27 @@ const AppRouter = (): React.JSX.Element => {
                   <Route path="users" element={<UsersManagementPage />} />
                   <Route path="users/:userId/edit" element={<div>Editar Usuario</div>} />
                   <Route path="users/create" element={<div>Crear Usuario</div>} />
-                  <Route path="requests/*" element={<div>Solicitudes Admin</div>} />
-                  <Route path="settings" element={<div>Configuración Admin</div>} />
+                  <Route 
+                    path="settings/*" 
+                    element={
+                      <SettingsLayout>
+                        <Routes>
+                          <Route path="general" element={<SettingsGeneralPage />} />
+                          <Route path="user-types" element={<div>User Types Page</div>} />
+                          <Route path="employee-roles" element={<EmployeeRolesPage />} />
+                          <Route path="platforms" element={<div>Platforms Page</div>} />
+                          <Route path="status-types" element={<div>Status Types Page</div>} />
+                          <Route path="priorities" element={<div>Priorities Page</div>} />
+                          <Route path="services" element={<div>Services Page</div>} />
+                          <Route path="units" element={<div>Units Page</div>} />
+                          <Route path="unit-types" element={<div>Unit Types Page</div>} />
+                          <Route path="professors" element={<div>Professors Page</div>} />
+                          <Route path="" element={<Navigate to="general" replace />} />
+                        </Routes>
+                      </SettingsLayout>
+                    } 
+                  />
                   <Route path="notifications" element={<div>Notificaciones Admin</div>} />
-                  <Route path="" element={<Navigate to="dashboard" replace />} />
-                  {/* Redirect por defecto al dashboard */}
                   <Route path="" element={<Navigate to="dashboard" replace />} />
                 </Routes>
               </AdminLayout>

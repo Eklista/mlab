@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Home,
   FolderOpen,
@@ -13,9 +14,8 @@ import {
   Mic,
   GraduationCap,
   Folder,
-  PlayCircle,
-  Star,
-  X
+  X,
+  Monitor
 } from 'lucide-react'
 
 interface TooltipProps {
@@ -258,72 +258,96 @@ interface SecondarySidebarProps {
   navItems: NavItem[]
   isActive: (path: string) => boolean
   onClose: () => void
+  onItemClick: (path: string) => void
 }
 
-const SecondarySidebar = ({ activeSubmenu, navItems, isActive, onClose }: SecondarySidebarProps) => (
-  <div className={`bg-stone-50 border-r border-stone-200 transition-all duration-300 hidden md:block ${
-    activeSubmenu ? 'w-64 opacity-100' : 'w-0 opacity-0 overflow-hidden'
-  }`}>
-    {activeSubmenu && (
-      <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-stone-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-zinc-900 font-semibold text-lg">
-                {navItems.find(item => item.id === activeSubmenu)?.label}
-              </h3>
-              <p className="text-zinc-600 text-sm mt-1">
-                {navItems.find(item => item.id === activeSubmenu)?.subItems?.length} elementos
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-stone-200 rounded-lg transition-all duration-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+const SecondarySidebar = ({ activeSubmenu, navItems, isActive, onClose, onItemClick }: SecondarySidebarProps) => {
+  // Auto-cerrar cuando se hace clic en un item
+  const handleItemClick = (path: string) => {
+    onItemClick(path)
+    // Pequeño delay para permitir la navegación antes de cerrar
+    setTimeout(() => {
+      onClose()
+    }, 100)
+  }
 
-        {/* Sub Navigation */}
-        <nav className="flex-1 p-3">
-          <div className="space-y-1">
-            {navItems
-              .find(item => item.id === activeSubmenu)
-              ?.subItems?.map((subItem) => (
-                <Link
-                  key={subItem.id}
-                  to={subItem.path}
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
-                    isActive(subItem.path)
-                      ? 'bg-zinc-900 text-white shadow-lg'
-                      : 'text-zinc-600 hover:text-zinc-900 hover:bg-stone-100'
-                  }`}
+  return (
+    <AnimatePresence>
+      {activeSubmenu && (
+        <motion.div 
+          initial={{ x: -264, opacity: 0 }}
+          animate={{ x: 0, opacity: 0.95 }}
+          exit={{ x: -264, opacity: 0 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 300, 
+            damping: 30,
+            opacity: { duration: 0.2 }
+          }}
+          className="fixed left-16 top-0 h-full w-64 bg-stone-50 border-r border-stone-200 shadow-lg z-50 hidden md:block"
+        >
+          <div className="h-full flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-stone-200 bg-stone-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-zinc-900 font-semibold text-lg">
+                    {navItems.find(item => item.id === activeSubmenu)?.label}
+                  </h3>
+                  <p className="text-zinc-600 text-sm mt-1">
+                    {navItems.find(item => item.id === activeSubmenu)?.subItems?.length} elementos
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-stone-200 rounded-lg transition-all duration-200"
                 >
-                  <div className={`transition-all duration-300 ${
-                    isActive(subItem.path) ? 'scale-110 text-white' : 'group-hover:scale-105'
-                  }`}>
-                    {subItem.icon}
-                  </div>
-                  <span className="font-medium text-sm flex-1">{subItem.label}</span>
-                  {subItem.badge && (
-                    <span className={`px-2 py-0.5 text-xs rounded-full font-bold ${
-                      isActive(subItem.path)
-                        ? 'bg-white/20 text-white'
-                        : 'bg-zinc-200 text-zinc-600'
-                    }`}>
-                      {subItem.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Sub Navigation */}
+            <nav className="flex-1 p-3 overflow-y-auto">
+              <div className="space-y-1">
+                {navItems
+                  .find(item => item.id === activeSubmenu)
+                  ?.subItems?.map((subItem) => (
+                    <Link
+                      key={subItem.id}
+                      to={subItem.path}
+                      onClick={() => handleItemClick(subItem.path)}
+                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                        isActive(subItem.path)
+                          ? 'bg-zinc-900 text-white shadow-lg'
+                          : 'text-zinc-600 hover:text-zinc-900 hover:bg-stone-100'
+                      }`}
+                    >
+                      <div className={`transition-all duration-300 ${
+                        isActive(subItem.path) ? 'scale-110 text-white' : 'group-hover:scale-105'
+                      }`}>
+                        {subItem.icon}
+                      </div>
+                      <span className="font-medium text-sm flex-1">{subItem.label}</span>
+                      {subItem.badge && (
+                        <span className={`px-2 py-0.5 text-xs rounded-full font-bold ${
+                          isActive(subItem.path)
+                            ? 'bg-white/20 text-white'
+                            : 'bg-zinc-200 text-zinc-600'
+                        }`}>
+                          {subItem.badge}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+              </div>
+            </nav>
           </div>
-        </nav>
-      </div>
-    )}
-  </div>
-)
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
 
 interface AdminSidebarProps {
   className?: string
@@ -334,6 +358,22 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ className = '', isMobile = false, onClose }: AdminSidebarProps): React.JSX.Element => {
   const location = useLocation()
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null)
+
+  // Mantener el submenu abierto basado en la ruta actual
+  useEffect(() => {
+    const currentPath = location.pathname
+    
+    // Determinar qué submenu debería estar activo basado en la ruta
+    if (currentPath.includes('/admin/projects/')) {
+      setActiveSubmenu('projects')
+    } else if (currentPath.includes('/admin/inventory/')) {
+      setActiveSubmenu('inventory')
+    } else {
+      // Si no está en una subruta, mantener el submenu cerrado
+      // Nota: users ya no tiene submenu, va directo a la página
+      setActiveSubmenu(null)
+    }
+  }, [location.pathname])
 
   const navItems: NavItem[] = [
     {
@@ -352,7 +392,6 @@ const AdminSidebar = ({ className = '', isMobile = false, onClose }: AdminSideba
       id: 'projects',
       label: 'Proyectos',
       icon: <FolderOpen className="w-5 h-5" />,
-      badge: 12,
       subItems: [
         {
           id: 'projects-general',
@@ -374,12 +413,6 @@ const AdminSidebar = ({ className = '', isMobile = false, onClose }: AdminSideba
           icon: <GraduationCap className="w-4 h-4" />,
           path: '/admin/projects/courses',
           badge: 4
-        },
-        {
-          id: 'projects-videos',
-          label: 'Videos',
-          icon: <PlayCircle className="w-4 h-4" />,
-          path: '/admin/projects/videos'
         }
       ]
     },
@@ -387,32 +420,26 @@ const AdminSidebar = ({ className = '', isMobile = false, onClose }: AdminSideba
       id: 'inventory',
       label: 'Inventario',
       icon: <Package className="w-5 h-5" />,
-      path: '/admin/inventory'
+      subItems: [
+        {
+          id: 'inventory-general',
+          label: 'Inventario General',
+          icon: <Monitor className="w-4 h-4" />,
+          path: '/admin/inventory/general'
+        },
+        {
+          id: 'inventory-supplies',
+          label: 'Proveeduría',
+          icon: <Package className="w-4 h-4" />,
+          path: '/admin/inventory/supplies'
+        }
+      ]
     },
     {
       id: 'users',
       label: 'Usuarios',
       icon: <Users className="w-5 h-5" />,
-      subItems: [
-        {
-          id: 'users-all',
-          label: 'Todos los usuarios',
-          icon: <Users className="w-4 h-4" />,
-          path: '/admin/users/all'
-        },
-        {
-          id: 'users-admins',
-          label: 'Administradores',
-          icon: <Star className="w-4 h-4" />,
-          path: '/admin/users/admins'
-        },
-        {
-          id: 'users-clients',
-          label: 'Clientes',
-          icon: <UserCheck className="w-4 h-4" />,
-          path: '/admin/users/clients'
-        }
-      ]
+      path: '/admin/users'
     },
     {
       id: 'requests',
@@ -447,6 +474,11 @@ const AdminSidebar = ({ className = '', isMobile = false, onClose }: AdminSideba
     }
   }
 
+  const handleSecondaryItemClick = (path: string) => {
+    // No cerrar automáticamente, solo navegar
+    console.log('Navigating to:', path)
+  }
+
   return (
     <div className={`flex ${className}`}>
       <MainSidebar 
@@ -457,13 +489,14 @@ const AdminSidebar = ({ className = '', isMobile = false, onClose }: AdminSideba
         isMobile={isMobile}
         onClose={onClose}
       />
-      {/* Secondary Sidebar - Solo en desktop */}
+      {/* Secondary Sidebar - Solo en desktop como overlay */}
       {!isMobile && (
         <SecondarySidebar 
           activeSubmenu={activeSubmenu}
           navItems={navItems}
           isActive={isActive}
           onClose={() => setActiveSubmenu(null)}
+          onItemClick={handleSecondaryItemClick}
         />
       )}
     </div>

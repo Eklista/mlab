@@ -1,4 +1,4 @@
-// src/AppRouter.tsx - Actualizado con ProjectsCreatePage
+// src/AppRouter.tsx - Con persistencia de ruta arreglada
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/hooks/useAuth'
 import LandingPage from '@/views/public/LandingPage'
@@ -14,6 +14,12 @@ import CourseDetailPage from '@/views/admin/courses/CourseDetailPage'
 import ClassDetailPage from '@/views/admin/courses/ClassDetailPage'
 import AdminLayout from '@/layouts/AdminLayout/AdminLayout'
 import ClientLayout from '@/layouts/ClientLayout/ClientLayout'
+import PodcastsPage from '@/views/admin/podcasts/PodcastsPage'
+import PodcastDetailPage from '@/views/admin/podcasts/PodcastDetailPage'
+import EpisodeDetailPage from '@/views/admin/podcasts/EpisodeDetailPage'
+import InventoryGeneralPage from './views/admin/Inventory/InventoryGeneralPage'
+import SuppliesPage from './views/admin/Inventory/SuppliesPage'
+import UsersManagementPage from '@/views/admin/users/UsersManagementPage'
 
 const AppRouter = (): React.JSX.Element => {
   const { isAuthenticated, user } = useAuth()
@@ -38,14 +44,26 @@ const AppRouter = (): React.JSX.Element => {
     return <>{children}</>
   }
 
-  // Dashboard redirect based on role
+  // Dashboard redirect based on role - mejorado para persistencia
   const DashboardRedirect = (): React.JSX.Element => {
     if (!isAuthenticated) {
       return <Navigate to="/login" replace />
     }
 
-    const redirectPath = user?.role === 'admin' ? '/admin/dashboard' : '/client/dashboard'
-    return <Navigate to={redirectPath} replace />
+    // Intentar obtener la última ruta guardada
+    const lastRoute = localStorage.getItem('medialab_last_route')
+    
+    if (lastRoute && user) {
+      // Verificar que la ruta sea válida para el rol del usuario
+      const isValidRoute = lastRoute.includes(`/${user.role}/`)
+      if (isValidRoute) {
+        return <Navigate to={lastRoute} replace />
+      }
+    }
+
+    // Fallback a dashboard por defecto
+    const defaultPath = user?.role === 'admin' ? '/admin/dashboard' : '/client/dashboard'
+    return <Navigate to={defaultPath} replace />
   }
 
   return (
@@ -70,17 +88,24 @@ const AppRouter = (): React.JSX.Element => {
                   <Route path="projects/general" element={<ProjectsGeneralPage />} />
                   <Route path="projects/create" element={<ProjectsCreatePage />} />
                   <Route path="projects/:projectId/details" element={<ProjectsDetailsPage />} />
-                  <Route path="projects/podcast" element={<div>Proyectos Podcast</div>} />
+                  <Route path="projects/podcast" element={<PodcastsPage />} />
                   <Route path="projects/courses" element={<CoursesPage />} />
+                  <Route path="podcasts" element={<PodcastsPage />} />
+                  <Route path="podcasts/:podcastId" element={<PodcastDetailPage />} />
+                  <Route path="podcasts/:podcastId/episodes/:episodeId" element={<EpisodeDetailPage />} />
                   <Route path="courses" element={<CoursesPage />} />
                   <Route path="courses/:courseId" element={<CourseDetailPage />} />
                   <Route path="courses/:courseId/classes/:classId" element={<ClassDetailPage />} />
-                  <Route path="projects/videos" element={<div>Proyectos Videos</div>} />
-                  <Route path="inventory/*" element={<div>Inventario Admin</div>} />
-                  <Route path="users/*" element={<div>Usuarios Admin</div>} />
+                  <Route path="inventory/general" element={<InventoryGeneralPage />} />
+                  <Route path="inventory/supplies" element={<SuppliesPage />} />
+                  <Route path="inventory/*" element={<Navigate to="general" replace />} />
+                  <Route path="users" element={<UsersManagementPage />} />
+                  <Route path="users/:userId/edit" element={<div>Editar Usuario</div>} />
+                  <Route path="users/create" element={<div>Crear Usuario</div>} />
                   <Route path="requests/*" element={<div>Solicitudes Admin</div>} />
                   <Route path="settings" element={<div>Configuración Admin</div>} />
                   <Route path="notifications" element={<div>Notificaciones Admin</div>} />
+                  <Route path="" element={<Navigate to="dashboard" replace />} />
                   {/* Redirect por defecto al dashboard */}
                   <Route path="" element={<Navigate to="dashboard" replace />} />
                 </Routes>

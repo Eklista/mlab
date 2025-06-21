@@ -1,5 +1,4 @@
-// src/views/admin/settings/SettingsGeneralPage.tsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Settings,
   Edit,
@@ -7,17 +6,23 @@ import {
   Database,
   Key,
   Shield,
-  Save,
-  Eye,
-  EyeOff
+  Server,
+  Clock
 } from 'lucide-react'
 import { 
   Button, 
-  Card, 
-  Input,
-  Modal,
-  Textarea
+  Card
 } from '@/core/components/ui'
+
+// Import modals
+import {
+  EmailConfigModal,
+  SystemConfigModal,
+  UploadsConfigModal,
+  APIsConfigModal,
+  BackupConfigModal
+} from './components/modals'
+import type { Configuration } from './components/modals'
 
 interface ConfigSection {
   id: string
@@ -27,96 +32,56 @@ interface ConfigSection {
   color: string
   status: 'configured' | 'pending' | 'error'
   lastUpdated: string
-}
-
-interface EmailConfig {
-  smtp_host: string
-  smtp_port: string
-  smtp_user: string
-  smtp_password: string
-  smtp_tls: boolean
-  from_name: string
-  from_address: string
-}
-
-interface UploadsConfig {
-  max_file_size: string
-  allowed_types: string
-  storage_path: string
-  auto_cleanup: boolean
-  cleanup_days: string
-}
-
-interface APIsConfig {
-  youtube_api_key: string
-  drive_client_id: string
-  drive_client_secret: string
-  zoom_api_key: string
-  zoom_webhook_secret: string
-}
-
-interface SystemConfig {
-  app_name: string
-  app_version: string
-  session_timeout: string
-  maintenance_mode: boolean
-  debug_enabled: boolean
-}
-
-interface BackupConfig {
-  enabled: boolean
-  frequency: string
-  retention_days: string
-  storage_location: string
-  auto_cleanup: boolean
+  configKeys: string[]
 }
 
 const SettingsGeneralPage = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null)
-  const [showPasswords, setShowPasswords] = useState<{[key: string]: boolean}>({})
+  const [configurations, setConfigurations] = useState<Configuration[]>([])
 
-  // Configuraciones por sección
-  const [emailConfig, setEmailConfig] = useState<EmailConfig>({
-    smtp_host: 'smtp.gmail.com',
-    smtp_port: '587',
-    smtp_user: 'medialab@galileo.edu',
-    smtp_password: 'SuperSecretPassword123!',
-    smtp_tls: true,
-    from_name: 'Medialab Universidad Galileo',
-    from_address: 'medialab@galileo.edu'
-  })
-
-  const [uploadsConfig, setUploadsConfig] = useState<UploadsConfig>({
-    max_file_size: '50',
-    allowed_types: 'jpg,jpeg,png,gif,pdf,mp4,mov,avi,mp3,wav,zip,rar',
-    storage_path: '/var/uploads/medialab',
-    auto_cleanup: true,
-    cleanup_days: '30'
-  })
-
-  const [apisConfig, setAPIsConfig] = useState<APIsConfig>({
-    youtube_api_key: 'AIzaSyC-dK_N5Q1TGHfE0aAS6KkP4ysIFtJWnzU',
-    drive_client_id: '123456789-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com',
-    drive_client_secret: 'GOCSPX-abcdefghijklmnopqrstuvwxyz',
-    zoom_api_key: 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOm51bGwsImlzcyI6IjEyMzQ1Njc4OSJ9',
-    zoom_webhook_secret: 'webhook_secret_123456'
-  })
-
-  const [systemConfig, setSystemConfig] = useState<SystemConfig>({
-    app_name: 'Medialab CRM',
-    app_version: '1.0.0',
-    session_timeout: '60',
-    maintenance_mode: false,
-    debug_enabled: false
-  })
-
-  const [backupConfig, setBackupConfig] = useState<BackupConfig>({
-    enabled: true,
-    frequency: 'daily',
-    retention_days: '30',
-    storage_location: '/var/backups/medialab',
-    auto_cleanup: true
-  })
+  // Mock configurations from database
+  useEffect(() => {
+    const mockConfigurations: Configuration[] = [
+      // Email/SMTP
+      { key: 'SMTP_HOST', value: 'smtp.gmail.com', type: 'string', isEncrypted: false, description: 'Servidor SMTP para envío de emails' },
+      { key: 'SMTP_PORT', value: '587', type: 'number', isEncrypted: false, description: 'Puerto del servidor SMTP' },
+      { key: 'SMTP_USER', value: 'medialab@galileo.edu', type: 'string', isEncrypted: false, description: 'Usuario SMTP' },
+      { key: 'SMTP_PASSWORD', value: 'encrypted_password', type: 'password', isEncrypted: true, description: 'Contraseña SMTP' },
+      { key: 'SMTP_TLS', value: 'true', type: 'boolean', isEncrypted: false, description: 'Habilitar encriptación TLS' },
+      { key: 'MAIL_FROM_NAME', value: 'Medialab Universidad Galileo', type: 'string', isEncrypted: false, description: 'Nombre del remitente' },
+      { key: 'MAIL_FROM_ADDRESS', value: 'medialab@galileo.edu', type: 'string', isEncrypted: false, description: 'Email del remitente' },
+      
+      // File Upload
+      { key: 'MAX_FILE_SIZE_MB', value: '50', type: 'number', isEncrypted: false, description: 'Tamaño máximo de archivo en MB' },
+      { key: 'ALLOWED_FILE_TYPES', value: 'jpg,jpeg,png,gif,pdf,mp4,mov,avi,mp3,wav,zip,rar', type: 'string', isEncrypted: false, description: 'Tipos de archivo permitidos' },
+      { key: 'UPLOAD_PATH', value: '/var/uploads/medialab', type: 'string', isEncrypted: false, description: 'Ruta de almacenamiento' },
+      { key: 'AUTO_CLEANUP_ENABLED', value: 'true', type: 'boolean', isEncrypted: false, description: 'Limpieza automática habilitada' },
+      { key: 'CLEANUP_DAYS', value: '30', type: 'number', isEncrypted: false, description: 'Días para limpieza automática' },
+      
+      // System
+      { key: 'APP_NAME', value: 'Medialab CRM', type: 'string', isEncrypted: false, description: 'Nombre de la aplicación' },
+      { key: 'APP_VERSION', value: '1.0.0', type: 'string', isEncrypted: false, description: 'Versión de la aplicación' },
+      { key: 'SESSION_TIMEOUT_MINUTES', value: '60', type: 'number', isEncrypted: false, description: 'Tiempo de expiración de sesión en minutos' },
+      { key: 'MAINTENANCE_MODE', value: 'false', type: 'boolean', isEncrypted: false, description: 'Modo mantenimiento activo' },
+      { key: 'DEBUG_ENABLED', value: 'false', type: 'boolean', isEncrypted: false, description: 'Modo debug habilitado' },
+      
+      // APIs
+      { key: 'YOUTUBE_API_KEY', value: 'encrypted_youtube_key', type: 'password', isEncrypted: true, description: 'API Key de YouTube' },
+      { key: 'GOOGLE_DRIVE_CLIENT_ID', value: 'encrypted_drive_client_id', type: 'password', isEncrypted: true, description: 'Google Drive Client ID' },
+      { key: 'GOOGLE_DRIVE_CLIENT_SECRET', value: 'encrypted_drive_secret', type: 'password', isEncrypted: true, description: 'Google Drive Client Secret' },
+      { key: 'ZOOM_API_KEY', value: 'encrypted_zoom_key', type: 'password', isEncrypted: true, description: 'Zoom API Key' },
+      { key: 'ZOOM_WEBHOOK_SECRET', value: 'encrypted_zoom_webhook', type: 'password', isEncrypted: true, description: 'Zoom Webhook Secret' },
+      
+      // Backup
+      { key: 'BACKUP_ENABLED', value: 'true', type: 'boolean', isEncrypted: false, description: 'Respaldos automáticos habilitados' },
+      { key: 'BACKUP_FREQUENCY', value: 'daily', type: 'string', isEncrypted: false, description: 'Frecuencia de respaldos' },
+      { key: 'BACKUP_RETENTION_DAYS', value: '30', type: 'number', isEncrypted: false, description: 'Días de retención de respaldos' },
+      { key: 'BACKUP_STORAGE_PATH', value: '/var/backups/medialab', type: 'string', isEncrypted: false, description: 'Ruta de almacenamiento de respaldos' },
+      { key: 'BACKUP_AUTO_CLEANUP', value: 'true', type: 'boolean', isEncrypted: false, description: 'Limpieza automática de respaldos' }
+    ]
+    
+    setConfigurations(mockConfigurations)
+  }, [])
 
   // Secciones de configuración
   const configSections: ConfigSection[] = [
@@ -127,7 +92,8 @@ const SettingsGeneralPage = () => {
       icon: <Mail className="w-6 h-6" />,
       color: 'from-green-500 to-emerald-600',
       status: 'configured',
-      lastUpdated: '2024-06-20'
+      lastUpdated: '2024-06-20',
+      configKeys: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_TLS', 'MAIL_FROM_NAME', 'MAIL_FROM_ADDRESS']
     },
     {
       id: 'uploads',
@@ -136,7 +102,8 @@ const SettingsGeneralPage = () => {
       icon: <Database className="w-6 h-6" />,
       color: 'from-blue-500 to-cyan-600',
       status: 'configured',
-      lastUpdated: '2024-06-18'
+      lastUpdated: '2024-06-18',
+      configKeys: ['MAX_FILE_SIZE_MB', 'ALLOWED_FILE_TYPES', 'UPLOAD_PATH', 'AUTO_CLEANUP_ENABLED', 'CLEANUP_DAYS']
     },
     {
       id: 'apis',
@@ -145,7 +112,8 @@ const SettingsGeneralPage = () => {
       icon: <Key className="w-6 h-6" />,
       color: 'from-purple-500 to-violet-600',
       status: 'pending',
-      lastUpdated: '2024-06-15'
+      lastUpdated: '2024-06-15',
+      configKeys: ['YOUTUBE_API_KEY', 'GOOGLE_DRIVE_CLIENT_ID', 'GOOGLE_DRIVE_CLIENT_SECRET', 'ZOOM_API_KEY', 'ZOOM_WEBHOOK_SECRET']
     },
     {
       id: 'system',
@@ -154,7 +122,8 @@ const SettingsGeneralPage = () => {
       icon: <Settings className="w-6 h-6" />,
       color: 'from-orange-500 to-red-600',
       status: 'configured',
-      lastUpdated: '2024-06-19'
+      lastUpdated: '2024-06-19',
+      configKeys: ['APP_NAME', 'APP_VERSION', 'SESSION_TIMEOUT_MINUTES', 'MAINTENANCE_MODE', 'DEBUG_ENABLED']
     },
     {
       id: 'backup',
@@ -163,7 +132,8 @@ const SettingsGeneralPage = () => {
       icon: <Shield className="w-6 h-6" />,
       color: 'from-indigo-500 to-purple-600',
       status: 'configured',
-      lastUpdated: '2024-06-17'
+      lastUpdated: '2024-06-17',
+      configKeys: ['BACKUP_ENABLED', 'BACKUP_FREQUENCY', 'BACKUP_RETENTION_DAYS', 'BACKUP_STORAGE_PATH', 'BACKUP_AUTO_CLEANUP']
     }
   ]
 
@@ -187,36 +157,78 @@ const SettingsGeneralPage = () => {
     )
   }
 
-  const togglePasswordVisibility = (field: string) => {
-    setShowPasswords(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }))
+  const handleSaveSection = (sectionId: string, data: {[key: string]: any}) => {
+    console.log(`Guardar configuración de ${sectionId}:`, data)
+    
+    // Aquí iríamos al backend para actualizar las configuraciones
+    // Por ahora solo actualizamos el estado local
+    const updatedConfigurations = configurations.map(config => {
+      if (data[config.key] !== undefined) {
+        return {
+          ...config,
+          value: typeof data[config.key] === 'boolean' ? data[config.key].toString() : data[config.key]
+        }
+      }
+      return config
+    })
+    
+    setConfigurations(updatedConfigurations)
+    setActiveModal(null)
+    
+    // Mostrar notificación de éxito
+    console.log('Configuración guardada exitosamente')
   }
 
-  const handleSaveEmail = () => {
-    console.log('Guardar configuración de email:', emailConfig)
-    setActiveModal(null)
-  }
-
-  const handleSaveUploads = () => {
-    console.log('Guardar configuración de uploads:', uploadsConfig)
-    setActiveModal(null)
-  }
-
-  const handleSaveAPIs = () => {
-    console.log('Guardar configuración de APIs:', apisConfig)
-    setActiveModal(null)
-  }
-
-  const handleSaveSystem = () => {
-    console.log('Guardar configuración del sistema:', systemConfig)
-    setActiveModal(null)
-  }
-
-  const handleSaveBackup = () => {
-    console.log('Guardar configuración de respaldos:', backupConfig)
-    setActiveModal(null)
+  const renderModal = () => {
+    switch (activeModal) {
+      case 'email':
+        return (
+          <EmailConfigModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+            configurations={configurations}
+            onSave={(data) => handleSaveSection('email', data)}
+          />
+        )
+      case 'system':
+        return (
+          <SystemConfigModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+            configurations={configurations}
+            onSave={(data) => handleSaveSection('system', data)}
+          />
+        )
+      case 'uploads':
+        return (
+          <UploadsConfigModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+            configurations={configurations}
+            onSave={(data) => handleSaveSection('uploads', data)}
+          />
+        )
+      case 'apis':
+        return (
+          <APIsConfigModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+            configurations={configurations}
+            onSave={(data) => handleSaveSection('apis', data)}
+          />
+        )
+      case 'backup':
+        return (
+          <BackupConfigModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+            configurations={configurations}
+            onSave={(data) => handleSaveSection('backup', data)}
+          />
+        )
+      default:
+        return null
+    }
   }
 
   return (
@@ -231,6 +243,62 @@ const SettingsGeneralPage = () => {
             Administración de configuraciones del sistema por secciones
           </p>
         </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Settings className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {configurations.length}
+              </p>
+              <p className="text-sm text-zinc-400">Configuraciones</p>
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/20 rounded-lg">
+              <Shield className="w-5 h-5 text-green-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {configurations.filter(c => c.isEncrypted).length}
+              </p>
+              <p className="text-sm text-zinc-400">Encriptadas</p>
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-orange-500/20 rounded-lg">
+              <Server className="w-5 h-5 text-orange-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {configSections.filter(s => s.status === 'configured').length}
+              </p>
+              <p className="text-sm text-zinc-400">Secciones OK</p>
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-500/20 rounded-lg">
+              <Clock className="w-5 h-5 text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {configSections.filter(s => s.status === 'pending').length}
+              </p>
+              <p className="text-sm text-zinc-400">Pendientes</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Configuration Sections */}
@@ -256,6 +324,12 @@ const SettingsGeneralPage = () => {
                 </p>
               </div>
 
+              {/* Config Count */}
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <Settings className="w-3 h-3" />
+                <span>{section.configKeys.length} configuraciones</span>
+              </div>
+
               {/* Section Footer */}
               <div className="flex items-center justify-between pt-2 border-t border-zinc-700/50">
                 <span className="text-xs text-zinc-500">
@@ -274,466 +348,8 @@ const SettingsGeneralPage = () => {
         ))}
       </div>
 
-      {/* Email Configuration Modal */}
-      <Modal
-        isOpen={activeModal === 'email'}
-        onClose={() => setActiveModal(null)}
-        title="Configuración de Email/SMTP"
-        size="lg"
-      >
-        <div className="space-y-6">
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-            <p className="text-blue-300 text-sm">
-              💡 Configura los parámetros SMTP para el envío de emails desde el sistema
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Servidor SMTP"
-              value={emailConfig.smtp_host}
-              onChange={(e) => setEmailConfig(prev => ({ ...prev, smtp_host: e.target.value }))}
-              placeholder="smtp.gmail.com"
-            />
-            
-            <Input
-              label="Puerto SMTP"
-              value={emailConfig.smtp_port}
-              onChange={(e) => setEmailConfig(prev => ({ ...prev, smtp_port: e.target.value }))}
-              placeholder="587"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Usuario SMTP"
-              value={emailConfig.smtp_user}
-              onChange={(e) => setEmailConfig(prev => ({ ...prev, smtp_user: e.target.value }))}
-              placeholder="usuario@dominio.com"
-            />
-            
-            <div className="relative">
-              <Input
-                label="Contraseña SMTP"
-                type={showPasswords.smtp_password ? 'text' : 'password'}
-                value={emailConfig.smtp_password}
-                onChange={(e) => setEmailConfig(prev => ({ ...prev, smtp_password: e.target.value }))}
-                placeholder="Contraseña del servidor"
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility('smtp_password')}
-                className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-300"
-              >
-                {showPasswords.smtp_password ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="smtp_tls"
-              checked={emailConfig.smtp_tls}
-              onChange={(e) => setEmailConfig(prev => ({ ...prev, smtp_tls: e.target.checked }))}
-              className="rounded border-zinc-600"
-            />
-            <label htmlFor="smtp_tls" className="text-sm text-zinc-300">
-              Habilitar encriptación TLS/SSL
-            </label>
-          </div>
-
-          <div className="border-t border-zinc-700/50 pt-4">
-            <h4 className="text-white font-medium mb-3">Información del Remitente</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Nombre del Remitente"
-                value={emailConfig.from_name}
-                onChange={(e) => setEmailConfig(prev => ({ ...prev, from_name: e.target.value }))}
-                placeholder="Medialab Universidad Galileo"
-              />
-              
-              <Input
-                label="Email del Remitente"
-                value={emailConfig.from_address}
-                onChange={(e) => setEmailConfig(prev => ({ ...prev, from_address: e.target.value }))}
-                placeholder="medialab@galileo.edu"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setActiveModal(null)}>
-              Cancelar
-            </Button>
-            <Button leftIcon={<Save className="w-4 h-4" />} onClick={handleSaveEmail}>
-              Guardar Configuración
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Uploads Configuration Modal */}
-      <Modal
-        isOpen={activeModal === 'uploads'}
-        onClose={() => setActiveModal(null)}
-        title="Configuración de Archivos"
-        size="lg"
-      >
-        <div className="space-y-6">
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
-            <p className="text-orange-300 text-sm">
-              📁 Configura los límites y reglas para la subida de archivos
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Tamaño Máximo (MB)"
-              value={uploadsConfig.max_file_size}
-              onChange={(e) => setUploadsConfig(prev => ({ ...prev, max_file_size: e.target.value }))}
-              placeholder="50"
-            />
-            
-            <Input
-              label="Ruta de Almacenamiento"
-              value={uploadsConfig.storage_path}
-              onChange={(e) => setUploadsConfig(prev => ({ ...prev, storage_path: e.target.value }))}
-              placeholder="/var/uploads/medialab"
-            />
-          </div>
-
-          <Textarea
-            label="Tipos de Archivo Permitidos"
-            value={uploadsConfig.allowed_types}
-            onChange={(e) => setUploadsConfig(prev => ({ ...prev, allowed_types: e.target.value }))}
-            placeholder="jpg,jpeg,png,gif,pdf,mp4,mov,avi,mp3,wav,zip,rar"
-            helperText="Separar con comas los tipos de archivo permitidos"
-            rows={3}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="auto_cleanup"
-                checked={uploadsConfig.auto_cleanup}
-                onChange={(e) => setUploadsConfig(prev => ({ ...prev, auto_cleanup: e.target.checked }))}
-                className="rounded border-zinc-600"
-              />
-              <label htmlFor="auto_cleanup" className="text-sm text-zinc-300">
-                Limpieza automática de archivos temporales
-              </label>
-            </div>
-
-            {uploadsConfig.auto_cleanup && (
-              <Input
-                label="Días para limpieza"
-                value={uploadsConfig.cleanup_days}
-                onChange={(e) => setUploadsConfig(prev => ({ ...prev, cleanup_days: e.target.value }))}
-                placeholder="30"
-              />
-            )}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setActiveModal(null)}>
-              Cancelar
-            </Button>
-            <Button leftIcon={<Save className="w-4 h-4" />} onClick={handleSaveUploads}>
-              Guardar Configuración
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* APIs Configuration Modal */}
-      <Modal
-        isOpen={activeModal === 'apis'}
-        onClose={() => setActiveModal(null)}
-        title="Configuración de APIs Externas"
-        size="lg"
-      >
-        <div className="space-y-6">
-          <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
-            <p className="text-purple-300 text-sm">
-              🔗 Configura las API keys para integración con servicios externos
-            </p>
-          </div>
-
-          {/* YouTube API */}
-          <div className="space-y-4">
-            <h4 className="text-white font-medium">YouTube API</h4>
-            <div className="relative">
-              <Input
-                label="API Key"
-                type={showPasswords.youtube_api ? 'text' : 'password'}
-                value={apisConfig.youtube_api_key}
-                onChange={(e) => setAPIsConfig(prev => ({ ...prev, youtube_api_key: e.target.value }))}
-                placeholder="AIzaSy..."
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility('youtube_api')}
-                className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-300"
-              >
-                {showPasswords.youtube_api ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Google Drive API */}
-          <div className="space-y-4">
-            <h4 className="text-white font-medium">Google Drive API</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="relative">
-                <Input
-                  label="Client ID"
-                  type={showPasswords.drive_client_id ? 'text' : 'password'}
-                  value={apisConfig.drive_client_id}
-                  onChange={(e) => setAPIsConfig(prev => ({ ...prev, drive_client_id: e.target.value }))}
-                  placeholder="123456789-abc...apps.googleusercontent.com"
-                />
-                <button
-                  type="button"
-                  onClick={() => togglePasswordVisibility('drive_client_id')}
-                  className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-300"
-                >
-                  {showPasswords.drive_client_id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              
-              <div className="relative">
-                <Input
-                  label="Client Secret"
-                  type={showPasswords.drive_client_secret ? 'text' : 'password'}
-                  value={apisConfig.drive_client_secret}
-                  onChange={(e) => setAPIsConfig(prev => ({ ...prev, drive_client_secret: e.target.value }))}
-                  placeholder="GOCSPX-..."
-                />
-                <button
-                  type="button"
-                  onClick={() => togglePasswordVisibility('drive_client_secret')}
-                  className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-300"
-                >
-                  {showPasswords.drive_client_secret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Zoom API */}
-          <div className="space-y-4">
-            <h4 className="text-white font-medium">Zoom API</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="relative">
-                <Input
-                  label="API Key/JWT"
-                  type={showPasswords.zoom_api ? 'text' : 'password'}
-                  value={apisConfig.zoom_api_key}
-                  onChange={(e) => setAPIsConfig(prev => ({ ...prev, zoom_api_key: e.target.value }))}
-                  placeholder="eyJhbGciOiJI..."
-                />
-                <button
-                  type="button"
-                  onClick={() => togglePasswordVisibility('zoom_api')}
-                  className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-300"
-                >
-                  {showPasswords.zoom_api ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              
-              <div className="relative">
-                <Input
-                  label="Webhook Secret"
-                  type={showPasswords.zoom_webhook ? 'text' : 'password'}
-                  value={apisConfig.zoom_webhook_secret}
-                  onChange={(e) => setAPIsConfig(prev => ({ ...prev, zoom_webhook_secret: e.target.value }))}
-                  placeholder="webhook_secret_..."
-                />
-                <button
-                  type="button"
-                  onClick={() => togglePasswordVisibility('zoom_webhook')}
-                  className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-300"
-                >
-                  {showPasswords.zoom_webhook ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setActiveModal(null)}>
-              Cancelar
-            </Button>
-            <Button leftIcon={<Save className="w-4 h-4" />} onClick={handleSaveAPIs}>
-              Guardar Configuración
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* System Configuration Modal */}
-      <Modal
-        isOpen={activeModal === 'system'}
-        onClose={() => setActiveModal(null)}
-        title="Configuración del Sistema"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
-            <p className="text-orange-300 text-sm">
-              ⚙️ Configuración general del sistema y aplicación
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Nombre de la Aplicación"
-              value={systemConfig.app_name}
-              onChange={(e) => setSystemConfig(prev => ({ ...prev, app_name: e.target.value }))}
-              placeholder="Medialab CRM"
-            />
-            
-            <Input
-              label="Versión"
-              value={systemConfig.app_version}
-              onChange={(e) => setSystemConfig(prev => ({ ...prev, app_version: e.target.value }))}
-              placeholder="1.0.0"
-            />
-          </div>
-
-          <Input
-            label="Tiempo de expiración de sesión (minutos)"
-            value={systemConfig.session_timeout}
-            onChange={(e) => setSystemConfig(prev => ({ ...prev, session_timeout: e.target.value }))}
-            placeholder="60"
-          />
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="maintenance_mode"
-                checked={systemConfig.maintenance_mode}
-                onChange={(e) => setSystemConfig(prev => ({ ...prev, maintenance_mode: e.target.checked }))}
-                className="rounded border-zinc-600"
-              />
-              <label htmlFor="maintenance_mode" className="text-sm text-zinc-300">
-                Modo mantenimiento (bloquea acceso a usuarios)
-              </label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="debug_enabled"
-                checked={systemConfig.debug_enabled}
-                onChange={(e) => setSystemConfig(prev => ({ ...prev, debug_enabled: e.target.checked }))}
-                className="rounded border-zinc-600"
-              />
-              <label htmlFor="debug_enabled" className="text-sm text-zinc-300">
-                Habilitar modo debug (logs detallados)
-              </label>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setActiveModal(null)}>
-              Cancelar
-            </Button>
-            <Button leftIcon={<Save className="w-4 h-4" />} onClick={handleSaveSystem}>
-              Guardar Configuración
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Backup Configuration Modal */}
-      <Modal
-        isOpen={activeModal === 'backup'}
-        onClose={() => setActiveModal(null)}
-        title="Configuración de Respaldos"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4">
-            <p className="text-indigo-300 text-sm">
-              🛡️ Configuración de respaldos automáticos del sistema
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="backup_enabled"
-              checked={backupConfig.enabled}
-              onChange={(e) => setBackupConfig(prev => ({ ...prev, enabled: e.target.checked }))}
-              className="rounded border-zinc-600"
-            />
-            <label htmlFor="backup_enabled" className="text-sm text-zinc-300">
-              Habilitar respaldos automáticos
-            </label>
-          </div>
-
-          {backupConfig.enabled && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Frecuencia
-                  </label>
-                  <select
-                    value={backupConfig.frequency}
-                    onChange={(e) => setBackupConfig(prev => ({ ...prev, frequency: e.target.value }))}
-                    className="w-full bg-zinc-800/50 border border-zinc-700 text-white rounded-lg px-4 py-3"
-                  >
-                    <option value="daily">Diario</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="monthly">Mensual</option>
-                  </select>
-                </div>
-                
-                <Input
-                  label="Días de retención"
-                  value={backupConfig.retention_days}
-                  onChange={(e) => setBackupConfig(prev => ({ ...prev, retention_days: e.target.value }))}
-                  placeholder="30"
-                />
-              </div>
-
-              <Input
-                label="Ubicación de almacenamiento"
-                value={backupConfig.storage_location}
-                onChange={(e) => setBackupConfig(prev => ({ ...prev, storage_location: e.target.value }))}
-                placeholder="/var/backups/medialab"
-              />
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="backup_auto_cleanup"
-                  checked={backupConfig.auto_cleanup}
-                  onChange={(e) => setBackupConfig(prev => ({ ...prev, auto_cleanup: e.target.checked }))}
-                  className="rounded border-zinc-600"
-                />
-                <label htmlFor="backup_auto_cleanup" className="text-sm text-zinc-300">
-                  Eliminar automáticamente respaldos antiguos
-                </label>
-              </div>
-            </>
-          )}
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setActiveModal(null)}>
-              Cancelar
-            </Button>
-            <Button leftIcon={<Save className="w-4 h-4" />} onClick={handleSaveBackup}>
-              Guardar Configuración
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Render active modal */}
+      {renderModal()}
     </div>
   )
 }

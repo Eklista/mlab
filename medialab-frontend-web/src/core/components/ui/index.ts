@@ -9,6 +9,7 @@ export { default as StatCard } from './StatCard'
 export { default as Modal } from './Modal'
 export { default as SlideIn } from './SlideIn'
 export { default as Calendar } from './Calendar'
+export { default as IconPicker } from './IconPicker'
 
 export {
   Table,

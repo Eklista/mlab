@@ -24,6 +24,8 @@ import RequestsPage from '@/views/admin/requests/RequestsPage'
 import SettingsLayout from '@/layouts/SettingsLayout/SettingsLayout'
 import SettingsGeneralPage from '@/views/admin/settings/SettingsGeneralPage'
 import EmployeeRolesPage from '@/views/admin/settings/EmployeeRolesPage'
+import UserTypesPage from './views/admin/settings/UserTypePage'
+import LinkPlatformsPage from './views/admin/settings/LinkPlatformsPage'
 
 const AppRouter = (): React.JSX.Element => {
   const { isAuthenticated, user } = useAuth()
@@ -113,9 +115,9 @@ const AppRouter = (): React.JSX.Element => {
                       <SettingsLayout>
                         <Routes>
                           <Route path="general" element={<SettingsGeneralPage />} />
-                          <Route path="user-types" element={<div>User Types Page</div>} />
+                          <Route path="user-types" element={<UserTypesPage />} />
                           <Route path="employee-roles" element={<EmployeeRolesPage />} />
-                          <Route path="platforms" element={<div>Platforms Page</div>} />
+                          <Route path="platforms" element={< LinkPlatformsPage />} />
                           <Route path="status-types" element={<div>Status Types Page</div>} />
                           <Route path="priorities" element={<div>Priorities Page</div>} />
                           <Route path="services" element={<div>Services Page</div>} />
